@@ -3,6 +3,8 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.chrome.options import Options
 import time
 
@@ -63,11 +65,13 @@ class WebDriver:
 
         # It will be a list containing all HTML section the days names.
         days = self.driver.find_elements(By.CLASS_NAME, "ylH6lf")
+
         # It will be a list with HTML section of open and close time for the respective day.
         times = self.driver.find_elements(By.CLASS_NAME, "y0skZc-t0oSud")
 
         # Getting the text(day name) from each HTML day section.
         day = [a.text for a in days]
+
         # Getting the text(open and close time) from each HTML open and close time section.
         open_close_time = [a.text for a in times]
 
@@ -77,34 +81,50 @@ class WebDriver:
     def get_popular_times(self):
         # The class that will get all the days and for each day finds out the busy percentage for each hour in a day
         # of the location.
-        #
         # The variable “a” is a list of all the days, then we loop through “a” and find out all the times available
         # in that day and store it into list “b”, then loop in b and find out the busy percentage for that respective
         # hour in a day and store it in our final data list.
 
         # It will be a List of the HTML Section of each day.
         a = self.driver.find_elements(By.CLASS_NAME, "g2BVhd")
+
         dic = {0: "Minggu", 1: "Senin", 2: "Selasa", 3: "Rabu", 4: "Kamis", 5: "Jumat", 6: "Sabtu"}
         l = {"Minggu": [], "Senin": [], "Selasa": [], "Rabu": [], "Kamis": [], "Jumat": [], "Sabtu": []}
         count = 0
 
         for i in a:
-            b = i.find_elements_by_class_name(
-                "dpoVLd")  # It will be a list of HTML Section of each hour in a day.
+            # It will be a list of HTML Section of each hour in a day.
+            b = i.find_elements(By.CLASS_NAME, "dpoVLd")
+
             for j in b:
-                x = j.get_attribute(
-                    "aria-label")  # It gets the busy percentage value from HTML Section of each hour.
+                # It gets the busy percentage value from HTML Section of each hour.
+                x = j.get_attribute("aria-label")
+
                 l[dic[count]].append(x)
             count = count + 1
 
         for i, j in l.items():
             self.location_data["Popular Times"][i] = j
 
+    def click_reviews_button(self):
+        # Find the All reviews button on the HTML and use the selenium .click() function to click it and get
+        # redirected to that page.
+
+        WebDriverWait(self.driver, 20).until(ec.presence_of_element_located((By.CLASS_NAME, "M77dve")))
+
+        element = self.driver.find_elements(By.CLASS_NAME, "M77dve")
+        for i in element:
+            x = i.get_attribute("aria-label")
+            if "Ulasan lainnya" in x:
+                i.click()
+                break
+
     def scrape(self, url):  # Passed the URL as a variable
         # Get is a method that will tell the driver to open at that particular URL
         self.driver.get(url)
 
-        time.sleep(10)  # Waiting for the page to load.
+        # Waiting for the page to load element "rating"
+        WebDriverWait(self.driver, 20).until(ec.presence_of_element_located((By.CLASS_NAME, "fontDisplayLarge")))
 
         self.get_location_data()  # Calling the function to get all the location data.
         self.click_open_close_time()  # Calling the function to click the open and close time button.
@@ -114,6 +134,7 @@ class WebDriver:
         # Clicking the all reviews button and redirecting the driver to the all reviews page.
         # if (self.click_all_reviews_button() == False):
         #     return (self.location_data)
+        self.click_reviews_button()
 
         time.sleep(5)  # Waiting for the all reviews page to load.
 
