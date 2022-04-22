@@ -83,10 +83,9 @@ class WebDriver:
         # hour in a day and store it in our final data list.
 
         # It will be a List of the HTML Section of each day.
-        a = self.driver.find_elements(By.CLASS_NAME, "g2BVhd eoFzo")
-        dic = {0: "Sunday", 1: "Monday", 2: "Tuesday", 3: "Wednesday", 4: "Thursday", 5: "Friday", 6: "Saturday"}
-        l = {"Sunday": [], "Monday": [], "Tuesday": [], "Wednesday": [], "Thursday": [], "Friday": [],
-             "Saturday": []}
+        a = self.driver.find_elements(By.CLASS_NAME, "g2BVhd")
+        dic = {0: "Minggu", 1: "Senin", 2: "Selasa", 3: "Rabu", 4: "Kamis", 5: "Jumat", 6: "Sabtu"}
+        l = {"Minggu": [], "Senin": [], "Selasa": [], "Rabu": [], "Kamis": [], "Jumat": [], "Sabtu": []}
         count = 0
 
         for i in a:
@@ -102,19 +101,15 @@ class WebDriver:
             self.location_data["Popular Times"][i] = j
 
     def scrape(self, url):  # Passed the URL as a variable
-        try:
-            # Get is a method that will tell the driver to open at that particular URL
-            self.driver.get(url)
-        except Exception as e:
-            self.driver.quit()
-            return
+        # Get is a method that will tell the driver to open at that particular URL
+        self.driver.get(url)
 
         time.sleep(10)  # Waiting for the page to load.
 
         self.get_location_data()  # Calling the function to get all the location data.
         self.click_open_close_time()  # Calling the function to click the open and close time button.
         self.get_location_open_close_time()  # Calling to get open and close time for each day.
-        # self.get_popular_times()  # Gets the busy percentage for each hour of each day.
+        self.get_popular_times()  # Gets the busy percentage for each hour of each day.
 
         # Clicking the all reviews button and redirecting the driver to the all reviews page.
         # if (self.click_all_reviews_button() == False):
