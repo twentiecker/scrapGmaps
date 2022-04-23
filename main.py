@@ -114,10 +114,37 @@ class WebDriver:
 
         element = self.driver.find_elements(By.CLASS_NAME, "M77dve")
         for i in element:
-            x = i.get_attribute("aria-label")
-            if "Ulasan lainnya" in x:
+            j = i.get_attribute("aria-label")
+            if "Ulasan lainnya" in j:
                 i.click()
                 break
+
+    def scroll_the_page(self):
+        # Gmaps like most other modern websites is implemented using AJAX which means the rest of
+        # the reviews will only be loaded into HTML when you scroll down to look at them.
+        #
+        # Scroll page function that will first scroll and load all the reviews before we further proceed
+        # to scrape reviews.
+
+        # Waits for the page to load.
+        WebDriverWait(self.driver, 10).until(
+            ec.presence_of_element_located((By.XPATH, '//*[@id="pane"]/div/div[1]/div/div/div[2]')))
+
+        pause_time = 2  # Waiting time after each scroll.
+        max_count = 5  # Number of times we will scroll the scroll bar to the bottom.
+        x = 0
+
+        while (x < max_count):
+            # It gets the section of the scroll bar.
+            scrollable_div = self.driver.find_element(By.XPATH, '//*[@id="pane"]/div/div[1]/div/div/div[2]')
+            try:
+                # Scroll it to the bottom.
+                self.driver.execute_script('arguments[0].scrollTop = arguments[0].scrollHeight', scrollable_div)
+            except:
+                pass
+
+            time.sleep(pause_time)  # wait for more reviews to load.
+            x = x + 1
 
     def scrape(self, url):  # Passed the URL as a variable
         # Get is a method that will tell the driver to open at that particular URL
@@ -132,13 +159,11 @@ class WebDriver:
         self.get_popular_times()  # Gets the busy percentage for each hour of each day.
 
         # Clicking the all reviews button and redirecting the driver to the all reviews page.
-        # if (self.click_all_reviews_button() == False):
-        #     return (self.location_data)
         self.click_reviews_button()
 
         time.sleep(5)  # Waiting for the all reviews page to load.
 
-        # self.scroll_the_page()  # Scrolling the page to load all reviews.
+        self.scroll_the_page()  # Scrolling the page to load all reviews.
         # self.expand_all_reviews()  # Expanding the long reviews by clicking see more button in each review.
         # self.get_reviews_data()  # Getting all the reviews data.
 
