@@ -137,21 +137,58 @@ class WebDriver:
         while (x < max_count):
             # It gets the section of the scroll bar.
             scrollable_div = self.driver.find_element(By.XPATH, '//*[@id="pane"]/div/div[1]/div/div/div[2]')
-            try:
-                # Scroll it to the bottom.
-                self.driver.execute_script('arguments[0].scrollTop = arguments[0].scrollHeight', scrollable_div)
-            except:
-                pass
+
+            # Scroll it to the bottom.
+            self.driver.execute_script('arguments[0].scrollTop = arguments[0].scrollHeight', scrollable_div)
 
             time.sleep(pause_time)  # wait for more reviews to load.
             x = x + 1
+
+    def expand_all_reviews(self):
+        # To see the long reviews we have to click the more button under each review to make it load into the Html.
+        #
+        # Expand all reviews function that will find all these more buttons on the already loaded page and clicks
+        # them to load the entire reviews.
+
+        element = self.driver.find_elements(By.CLASS_NAME, "w8nwRe")
+        for i in element:
+            i.click()
+
+    def get_reviews_data(self):
+        # Now that everything is been loaded we will create a function that scrapes the reviews data like
+        # each reviewer name, text, posted date, and rating.
+
+        review_names = self.driver.find_elements(By.CLASS_NAME,
+            "d4r55")  # Its a list of all the HTML sections with the reviewer name.
+        review_text = self.driver.find_elements(By.CLASS_NAME,
+            "wiI7pd")  # Its a list of all the HTML sections with the reviewer reviews.
+        review_dates = self.driver.find_elements(By.CLASS_NAME,
+            "rsqaWe")  # Its a list of all the HTML sections with the reviewer reviewed date.
+        review_stars = self.driver.find_elements(By.CLASS_NAME,
+            "kvMYJc")  # Its a list of all the HTML sections with the reviewer rating.
+
+        review_stars_final = []
+
+        for i in review_stars:
+            review_stars_final.append(i.get_attribute("aria-label"))
+
+        review_names_list = [a.text for a in review_names]
+        review_text_list = [a.text for a in review_text]
+        review_dates_list = [a.text for a in review_dates]
+        review_stars_list = [a for a in review_stars_final]
+
+        for (a, b, c, d) in zip(review_names_list, review_text_list, review_dates_list, review_stars_list):
+            self.location_data["Reviews"].append({"name": a, "review": b, "date": c, "rating": d})
+
+
 
     def scrape(self, url):  # Passed the URL as a variable
         # Get is a method that will tell the driver to open at that particular URL
         self.driver.get(url)
 
         # Waiting for the page to load element "rating"
-        WebDriverWait(self.driver, 20).until(ec.presence_of_element_located((By.CLASS_NAME, "fontDisplayLarge")))
+        WebDriverWait(self.driver, 20).until(
+            ec.presence_of_element_located((By.XPATH, '//*[@id="pane"]/div/div[1]/div/div')))
 
         self.get_location_data()  # Calling the function to get all the location data.
         self.click_open_close_time()  # Calling the function to click the open and close time button.
@@ -164,14 +201,16 @@ class WebDriver:
         time.sleep(5)  # Waiting for the all reviews page to load.
 
         self.scroll_the_page()  # Scrolling the page to load all reviews.
-        # self.expand_all_reviews()  # Expanding the long reviews by clicking see more button in each review.
-        # self.get_reviews_data()  # Getting all the reviews data.
+        self.expand_all_reviews()  # Expanding the long reviews by clicking see more button in each review.
+        self.get_reviews_data()  # Getting all the reviews data.
 
         self.driver.quit()  # Closing the driver instance.
 
         return (self.location_data)  # Returning the Scraped Data.
 
 
-url = "https://www.google.co.id/maps/place/Bogor+Cafe/@-6.172172,106.8266993,15z/data=!4m9!1m2!2m1!1srestaurant+or+cafe!3m5!1s0x2e69f5cc0abf0f67:0x78dce6deb9815e6!8m2!3d-6.172172!4d106.835454!15sChJyZXN0YXVyYW50IG9yIGNhZmVaFCIScmVzdGF1cmFudCBvciBjYWZlkgEVaW5kb25lc2lhbl9yZXN0YXVyYW50mgEkQ2hkRFNVaE5NRzluUzBWSlEwRm5TVVI1TFdWUFVISlJSUkFC"
+# url = "https://www.google.co.id/maps/place/Bogor+Cafe/@-6.172172,106.8266993,15z/data=!4m9!1m2!2m1!1srestaurant+or+cafe!3m5!1s0x2e69f5cc0abf0f67:0x78dce6deb9815e6!8m2!3d-6.172172!4d106.835454!15sChJyZXN0YXVyYW50IG9yIGNhZmVaFCIScmVzdGF1cmFudCBvciBjYWZlkgEVaW5kb25lc2lhbl9yZXN0YXVyYW50mgEkQ2hkRFNVaE5NRzluUzBWSlEwRm5TVVI1TFdWUFVISlJSUkFC"
+# url = "https://www.google.co.id/maps/place/CO3+Coffee+Cozy+Comfort/@-6.1625035,106.8112308,15z/data=!4m9!1m2!2m1!1srestaurant+or+cafe!3m5!1s0x2e69f5d8c2bfd327:0xfbea296c56bc6aa1!8m2!3d-6.1624975!4d106.8200114!15sChJyZXN0YXVyYW50IG9yIGNhZmVaFCIScmVzdGF1cmFudCBvciBjYWZlkgEEY2FmZZoBJENoZERTVWhOTUc5blMwVkpRMEZuU1VObk1rNU1jbXBCUlJBQg"
+url = "https://www.google.co.id/maps/place/Yan+Kedai+Kopi/@-6.1862351,106.8165101,15z/data=!4m9!1m2!2m1!1srestaurant+or+cafe!3m5!1s0x2e69f5bfb8443da7:0xe95c05cd7b54d468!8m2!3d-6.1862351!4d106.8252648!15sChJyZXN0YXVyYW50IG9yIGNhZmVaFCIScmVzdGF1cmFudCBvciBjYWZlkgELY29mZmVlX3Nob3CaASRDaGREU1VoTk1HOW5TMFZKUTBGblNVUlhOR1p5UkhsQlJSQUI"
 x = WebDriver()
 print(x.scrape(url))
