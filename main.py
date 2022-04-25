@@ -20,6 +20,7 @@ class WebDriver:
         service = ChromeService(executable_path=ChromeDriverManager().install())
         self.driver = webdriver.Chrome(service=service)
 
+        self.location_data["title"] = "NA"
         # self.location_data["rating"] = "NA"
         # self.location_data["reviews_count"] = "NA"
         self.location_data["price_cat"] = "NA"
@@ -40,6 +41,7 @@ class WebDriver:
         # HTML elements with that class name or id name and stores them into a variable, and later we can use
         # the text() function over those variables to get the respective values.
 
+        title = self.driver.find_element(By.CLASS_NAME,'DUwDvf')
         # avg_rating = self.driver.find_element(By.CLASS_NAME, "fontDisplayLarge")
         # total_reviews = self.driver.find_element(By.CLASS_NAME, "h0ySl-wcwwM-E70qVe")
         container_price = self.driver.find_element(By.CLASS_NAME, 'mgr77e')
@@ -56,6 +58,9 @@ class WebDriver:
             if label.get_attribute('src') == "https://maps.gstatic.com/mapfiles/maps_lite/images/2x/ic_plus_code.png":
                 address = i.find_element(By.CLASS_NAME, 'Io6YTe')
 
+        # Get province of address
+        prov = address.text.strip().split(sep=",")
+
         # phone_number = self.driver.find_element(By.XPATH,
         #                                         "//*[@id='pane']/div/div[1]/div/div/div[9]/div[5]/button/div[1]/div[2]/div[1]")
         # website = self.driver.find_element(By.XPATH,
@@ -64,9 +69,10 @@ class WebDriver:
         # self.location_data["rating"] = avg_rating.text.strip()
         # self.location_data["reviews_count"] = total_reviews.text.replace("ulasan", ""). \
         #     replace("reviews", "").strip()
+        self.location_data["title"] = title.text.strip()
         self.location_data["price_cat"] = price_cat.strip()
         self.location_data["price_desc"] = price_desc.replace(":", "").strip()
-        self.location_data["location"] = address.text.strip()
+        self.location_data["location"] = prov[2].strip()
         # self.location_data["contact"] = phone_number.text.strip()
         # self.location_data["website"] = website.text.strip()
 
@@ -206,12 +212,12 @@ class WebDriver:
                 # Waiting for the page to load element "rating"
                 WebDriverWait(self.driver, 20).until(
                     ec.presence_of_element_located((By.XPATH, '//*[@id="pane"]/div/div[1]/div/div')))
-                print("element founded, ready to scrap")
-                print("===============================")
+                print("Element found, ready to scrap!")
+                print("==============================================================")
                 break
             except TimeoutException:
-                self.driver.quit()
-                continue
+                self.driver.get(url)
+                print("Sorry website not available!")
 
         self.get_location_data()  # Calling the function to get all the location data.
         # self.click_open_close_time()  # Calling the function to click the open and close time button.
