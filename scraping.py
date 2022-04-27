@@ -42,10 +42,12 @@ class Scraping:
 
         # Get title
         title = self.driver.find_element(By.CLASS_NAME, 'DUwDvf')
+        # ActionChains(self.driver).move_to_element(title).perform()
         self.location_data["title"] = title.text.strip()
 
         # Get rating
         avg_rating = self.driver.find_element(By.CLASS_NAME, "fontDisplayLarge")
+        # ActionChains(self.driver).move_to_element(avg_rating).perform()
         self.location_data["rating"] = avg_rating.text.strip()
 
         # Get reviews
@@ -91,10 +93,12 @@ class Scraping:
         # Get plus code (coordinat)
         tag_plus_code = self.driver.find_elements(By.CLASS_NAME, 'CsEnBe')
         for i in tag_plus_code:
+            time.sleep(1)
+            ActionChains(self.driver).move_to_element(i).perform()
             label = i.get_attribute('aria-label')
             if "Plus Codes" in label:
                 plus_code = i
-                print(i.get_attribute('aria-label'))
+                break
 
         # Get province from plus code (coordinat)
         prov = plus_code.text.strip().split(sep=",")
@@ -181,17 +185,18 @@ class Scraping:
         max_count = 2  # Number of times we will scroll the scroll bar to the bottom.
         x = 0
 
-        while (x < max_count):
-            # It gets the section of the scroll bar.
-            tag_scrollable = self.driver.find_elements(By.CLASS_NAME, 'm6QErb')
-            for i in tag_scrollable:
-                j = i.find_elements(By.CLASS_NAME, 'PPCwl')
-                if j:
-                    scrollable_div = i
+        # It gets the section of the scroll bar.
+        print("Get the scroll pane, wait a sec!")
+        print("===========================================")
+        tag_scrollable = self.driver.find_elements(By.CLASS_NAME, 'm6QErb')
+        for i in tag_scrollable:
+            j = i.find_elements(By.CLASS_NAME, 'PPCwl')
+            if j:
+                scrollable_div = i
 
+        while (x < max_count):
             # Scroll it to the bottom.
             self.driver.execute_script('arguments[0].scrollTop = arguments[0].scrollHeight', scrollable_div)
-            print(f"scroll {x + 1}")
 
             time.sleep(pause_time)  # wait for more reviews to load.
             x = x + 1
@@ -246,6 +251,9 @@ class Scraping:
                     burger_menu = self.driver.find_element(By.CLASS_NAME, 'xoLGzf-icon')
                     if burger_menu.get_attribute(
                             'src') == "https://www.gstatic.com/images/icons/material/system_gm/1x/menu_black_24dp.png":
+                        print("Oops, sorry wrong website!")
+                        print("===========================================")
+                        print("Attempting to get a right website!")
                         self.driver.quit()
                         self.driver = webdriver.Chrome(service=self.service)
                         continue
@@ -254,18 +262,16 @@ class Scraping:
                         WebDriverWait(self.driver, 20).until(
                             ec.presence_of_element_located((By.CLASS_NAME, 'g2BVhd')))
 
-                        print("Element found, ready to scrap!")
+                        print("Popular times found, ready to scrap!")
                         print("==============================================================")
                         break
             except TimeoutException:
-                print("Sorry wrong website!")
+                print("Oops, sorry wrong website!")
                 print("===========================================")
                 print("Attempting to get a right website!")
                 self.driver.quit()
                 self.driver = webdriver.Chrome(service=self.service)
                 continue
-
-        time.sleep(5)  # Waiting for the complete page to load.
 
         self.get_location_data()  # Calling the function to get all the location data.
         self.click_open_close_time()  # Calling the function to click the open and close time button.
@@ -282,14 +288,5 @@ class Scraping:
         self.get_reviews_data()  # Getting all the reviews data.
 
         self.driver.quit()  # Closing the driver instance.
-        # print(self.location_data['Popular Times']['Monday'])  # access object
 
         return self.location_data  # Returning the Scraped Data.
-
-
-url = "https://www.google.co.id/maps/place/Bogor+Cafe/@-6.172172,106.8266993,15z/data=!4m9!1m2!2m1!1srestaurant+or+cafe!3m5!1s0x2e69f5cc0abf0f67:0x78dce6deb9815e6!8m2!3d-6.172172!4d106.835454!15sChJyZXN0YXVyYW50IG9yIGNhZmVaFCIScmVzdGF1cmFudCBvciBjYWZlkgEVaW5kb25lc2lhbl9yZXN0YXVyYW50mgEkQ2hkRFNVaE5NRzluUzBWSlEwRm5TVVI1TFdWUFVISlJSUkFC"
-# url = "https://www.google.co.id/maps/place/D+cafe+jakarta/data=!4m6!3m5!1s0x2e69f5a209ba61c1:0xde2c2398c32a987f!8m2!3d-6.1802116!4d106.8510208!16s%2Fg%2F11rggggxh2?authuser=0&hl=en&rclk=1"
-x = Scraping()
-print(x.scrape(url))
-# print(Scraping().location_data['Popular Times']['Monday'])
-# print(self.location_data['Popular Times']['Monday'])  # access object
