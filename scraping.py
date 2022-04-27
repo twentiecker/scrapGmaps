@@ -26,27 +26,25 @@ class Scraping:
         self.location_data["price_cat"] = "NA"
         self.location_data["price_desc"] = "NA"
         self.location_data["address"] = "NA"
-        # self.location_data["Time"] = {"Senin": "NA", "Selasa": "NA", "Rabu": "NA", "Kamis": "NA",
-        #                               "Jumat": "NA", "Sabtu": "NA", "Minggu": "NA"}
+        self.location_data["Time"] = {"Senin": "NA", "Selasa": "NA", "Rabu": "NA", "Kamis": "NA",
+                                      "Jumat": "NA", "Sabtu": "NA", "Minggu": "NA"}
         self.location_data["website"] = "NA"
         self.location_data["contact"] = "NA"
         self.location_data["location"] = "NA"
         self.location_data["Popular Times"] = {"Senin": [], "Selasa": [], "Rabu": [], "Kamis": [],
                                                "Jumat": [], "Sabtu": [], "Minggu": []}
-        # self.location_data["Reviews"] = []
-
-        # print(self.location_data['Popular Times']['Monday'])  # access object
+        self.location_data["Reviews"] = []
 
     def get_location_data(self):
         # The self.driver.find_element are the Selenium functions that automatically find out the
         # HTML elements with that class name or id name and stores them into a variable, and later we can use
         # the text() function over those variables to get the respective values.
 
-        # Get title page
+        # Get title
         title = self.driver.find_element(By.CLASS_NAME, 'DUwDvf')
         self.location_data["title"] = title.text.strip()
 
-        # Get Rating
+        # Get rating
         avg_rating = self.driver.find_element(By.CLASS_NAME, "fontDisplayLarge")
         self.location_data["rating"] = avg_rating.text.strip()
 
@@ -72,8 +70,6 @@ class Scraping:
             label = i.get_attribute('aria-label')
             if "Alamat" in label:
                 address = i
-        # website = self.driver.find_element(By.XPATH,
-        #                                    "//*[@id='pane']/div/div[1]/div/div/div[9]/div[4]/button/div[1]/div[2]/div[1]")
         self.location_data["address"] = address.text.strip()
 
         # Get website
@@ -82,8 +78,6 @@ class Scraping:
             label = i.get_attribute('aria-label')
             if "Situs Web" in label:
                 website = i
-        # website = self.driver.find_element(By.XPATH,
-        #                                    "//*[@id='pane']/div/div[1]/div/div/div[9]/div[4]/button/div[1]/div[2]/div[1]")
         self.location_data["website"] = website.text.strip()
 
         # Get phone number
@@ -92,8 +86,6 @@ class Scraping:
             label = i.get_attribute('aria-label')
             if "Telepon" in label:
                 phone_number = i
-        # phone_number = self.driver.find_element(By.XPATH,
-        #                                         "//*[@id='pane']/div/div[1]/div/div/div[9]/div[5]/button/div[1]/div[2]/div[1]")
         self.location_data["contact"] = phone_number.text.strip()
 
         # Get plus code (coordinat)
@@ -102,35 +94,36 @@ class Scraping:
             label = i.get_attribute('aria-label')
             if "Plus Codes" in label:
                 plus_code = i
+                print(i.get_attribute('aria-label'))
 
         # Get province from plus code (coordinat)
         prov = plus_code.text.strip().split(sep=",")
         self.location_data["location"] = prov[2].strip()
 
-    # def click_open_close_time(self):
-    #     if len(list(self.driver.find_elements(By.CLASS_NAME, "LJKBpe-Tswv1b-hour-text"))) != 0:
-    #         element = self.driver.find_element(By.CLASS_NAME, "LJKBpe-Tswv1b-hour-text")
-    #         self.driver.implicitly_wait(5)
-    #         ActionChains(self.driver).move_to_element(element).click(element).perform()
+    def click_open_close_time(self):
+        if len(list(self.driver.find_elements(By.CLASS_NAME, "LJKBpe-Tswv1b-hour-text"))) != 0:
+            element = self.driver.find_element(By.CLASS_NAME, "LJKBpe-Tswv1b-hour-text")
+            self.driver.implicitly_wait(5)
+            ActionChains(self.driver).move_to_element(element).click(element).perform()
 
-    # def get_location_open_close_time(self):
-    #     # The class “lo7U087hsMA__row-header” contains all the days and “lo7U087hsMA__row-interval”
-    #     # contains the respective open and close times.
-    #
-    #     # It will be a list containing all HTML section the days names.
-    #     days = self.driver.find_elements(By.CLASS_NAME, "ylH6lf")
-    #
-    #     # It will be a list with HTML section of open and close time for the respective day.
-    #     times = self.driver.find_elements(By.CLASS_NAME, "y0skZc-t0oSud")
-    #
-    #     # Getting the text(day name) from each HTML day section.
-    #     day = [a.text for a in days]
-    #
-    #     # Getting the text(open and close time) from each HTML open and close time section.
-    #     open_close_time = [a.text for a in times]
-    #
-    #     for i, j in zip(day, open_close_time):
-    #         self.location_data["Time"][i] = j
+    def get_location_open_close_time(self):
+        # The class “lo7U087hsMA__row-header” contains all the days and “lo7U087hsMA__row-interval”
+        # contains the respective open and close times.
+
+        # It will be a list containing all HTML section the days names.
+        days = self.driver.find_elements(By.CLASS_NAME, "ylH6lf")
+
+        # It will be a list with HTML section of open and close time for the respective day.
+        times = self.driver.find_elements(By.CLASS_NAME, "y0skZc-t0oSud")
+
+        # Getting the text(day name) from each HTML day section.
+        day = [a.text for a in days]
+
+        # Getting the text(open and close time) from each HTML open and close time section.
+        open_close_time = [a.text for a in times]
+
+        for i, j in zip(day, open_close_time):
+            self.location_data["Time"][i] = j
 
     def get_popular_times(self):
         # The class that will get all the days and for each day finds out the busy percentage for each hour in a day
@@ -160,79 +153,87 @@ class Scraping:
         for i, j in l.items():
             self.location_data["Popular Times"][i] = j
 
-    # def click_reviews_button(self):
-    #     # Find the All reviews button on the HTML and use the selenium .click() function to click it and get
-    #     # redirected to that page.
-    #
-    #     WebDriverWait(self.driver, 20).until(ec.presence_of_element_located((By.CLASS_NAME, "M77dve")))
-    #
-    #     element = self.driver.find_elements(By.CLASS_NAME, "M77dve")
-    #     for i in element:
-    #         j = i.get_attribute("aria-label")
-    #         if "Ulasan lainnya" in j:
-    #             i.click()
-    #             break
+    def click_reviews_button(self):
+        # Find the All reviews button on the HTML and use the selenium .click() function to click it and get
+        # redirected to that page.
 
-    # def scroll_the_page(self):
-    #     # Gmaps like most other modern websites is implemented using AJAX which means the rest of
-    #     # the reviews will only be loaded into HTML when you scroll down to look at them.
-    #     #
-    #     # Scroll page function that will first scroll and load all the reviews before we further proceed
-    #     # to scrape reviews.
-    #
-    #     # Waits for the page to load.
-    #     WebDriverWait(self.driver, 10).until(
-    #         ec.presence_of_element_located((By.XPATH, '//*[@id="pane"]/div/div[1]/div/div/div[2]')))
-    #
-    #     pause_time = 2  # Waiting time after each scroll.
-    #     max_count = 5  # Number of times we will scroll the scroll bar to the bottom.
-    #     x = 0
-    #
-    #     while (x < max_count):
-    #         # It gets the section of the scroll bar.
-    #         scrollable_div = self.driver.find_element(By.XPATH, '//*[@id="pane"]/div/div[1]/div/div/div[2]')
-    #
-    #         # Scroll it to the bottom.
-    #         self.driver.execute_script('arguments[0].scrollTop = arguments[0].scrollHeight', scrollable_div)
-    #
-    #         time.sleep(pause_time)  # wait for more reviews to load.
-    #         x = x + 1
+        WebDriverWait(self.driver, 20).until(ec.presence_of_element_located((By.CLASS_NAME, "M77dve")))
 
-    # def expand_all_reviews(self):
-    #     # To see the long reviews we have to click the more button under each review to make it load into the Html.
-    #     #
-    #     # Expand all reviews function that will find all these more buttons on the already loaded page and clicks
-    #     # them to load the entire reviews.
-    #
-    #     element = self.driver.find_elements(By.CLASS_NAME, "w8nwRe")
-    #     for i in element:
-    #         i.click()
+        element = self.driver.find_elements(By.CLASS_NAME, "M77dve")
+        for i in element:
+            j = i.get_attribute("aria-label")
+            if "Ulasan lainnya" in j:
+                i.click()
+                break
 
-    # def get_reviews_data(self):
-    #     # Now that everything is been loaded we will create a function that scrapes the reviews data like
-    #     # each reviewer name, text, posted date, and rating.
-    #
-    #     review_names = self.driver.find_elements(By.CLASS_NAME,
-    #                                              "d4r55")  # Its a list of all the HTML sections with the reviewer name.
-    #     review_text = self.driver.find_elements(By.CLASS_NAME,
-    #                                             "wiI7pd")  # Its a list of all the HTML sections with the reviewer reviews.
-    #     review_dates = self.driver.find_elements(By.CLASS_NAME,
-    #                                              "rsqaWe")  # Its a list of all the HTML sections with the reviewer reviewed date.
-    #     review_stars = self.driver.find_elements(By.CLASS_NAME,
-    #                                              "kvMYJc")  # Its a list of all the HTML sections with the reviewer rating.
-    #
-    #     review_stars_final = []
-    #
-    #     for i in review_stars:
-    #         review_stars_final.append(i.get_attribute("aria-label"))
-    #
-    #     review_names_list = [a.text for a in review_names]
-    #     review_text_list = [a.text for a in review_text]
-    #     review_dates_list = [a.text for a in review_dates]
-    #     review_stars_list = [a for a in review_stars_final]
-    #
-    #     for (a, b, c, d) in zip(review_names_list, review_text_list, review_dates_list, review_stars_list):
-    #         self.location_data["Reviews"].append({"name": a, "review": b, "date": c, "rating": d})
+    def scroll_the_page(self):
+        # Gmaps like most other modern websites is implemented using AJAX which means the rest of
+        # the reviews will only be loaded into HTML when you scroll down to look at them.
+        #
+        # Scroll page function that will first scroll and load all the reviews before we further proceed
+        # to scrape reviews.
+
+        # Waits for the page to load.
+        WebDriverWait(self.driver, 10).until(
+            ec.presence_of_element_located((By.CLASS_NAME, 'jftiEf')))
+
+        pause_time = 2  # Waiting time after each scroll.
+        max_count = 2  # Number of times we will scroll the scroll bar to the bottom.
+        x = 0
+
+        while (x < max_count):
+            # It gets the section of the scroll bar.
+            tag_scrollable = self.driver.find_elements(By.CLASS_NAME, 'm6QErb')
+            for i in tag_scrollable:
+                j = i.find_elements(By.CLASS_NAME, 'PPCwl')
+                if j:
+                    scrollable_div = i
+
+            # Scroll it to the bottom.
+            self.driver.execute_script('arguments[0].scrollTop = arguments[0].scrollHeight', scrollable_div)
+            print(f"scroll {x + 1}")
+
+            time.sleep(pause_time)  # wait for more reviews to load.
+            x = x + 1
+
+    def expand_all_reviews(self):
+        # To see the long reviews we have to click the more button under each review to make it load into the Html.
+        #
+        # Expand all reviews function that will find all these more buttons on the already loaded page and clicks
+        # them to load the entire reviews.
+
+        element = self.driver.find_elements(By.CLASS_NAME, "w8nwRe")
+        for i in element:
+            i.click()
+
+    def get_reviews_data(self):
+        # Now that everything is been loaded we will create a function that scrapes the reviews data like
+        # each reviewer name, text, posted date, and rating.
+
+        # Its a list of all the HTML sections with the reviewer name.
+        review_names = self.driver.find_elements(By.CLASS_NAME, "d4r55")
+
+        # Its a list of all the HTML sections with the reviewer reviews.
+        review_text = self.driver.find_elements(By.CLASS_NAME, "wiI7pd")
+
+        # Its a list of all the HTML sections with the reviewer reviewed date.
+        review_dates = self.driver.find_elements(By.CLASS_NAME, "rsqaWe")
+
+        # Its a list of all the HTML sections with the reviewer rating.
+        review_stars = self.driver.find_elements(By.CLASS_NAME, "kvMYJc")
+
+        review_stars_final = []
+
+        for i in review_stars:
+            review_stars_final.append(i.get_attribute("aria-label"))
+
+        review_names_list = [a.text for a in review_names]
+        review_text_list = [a.text for a in review_text]
+        review_dates_list = [a.text for a in review_dates]
+        review_stars_list = [a for a in review_stars_final]
+
+        for (a, b, c, d) in zip(review_names_list, review_text_list, review_dates_list, review_stars_list):
+            self.location_data["Reviews"].append({"name": a, "review": b, "date": c, "rating": d})
 
     def scrape(self, url):  # Passed the URL as a variable
         while True:
@@ -240,12 +241,22 @@ class Scraping:
                 # Get is a method that will tell the driver to open at that particular URL
                 self.driver.get(url)
 
-                # Waiting for the page to load element "rating"
-                WebDriverWait(self.driver, 20).until(
-                    ec.presence_of_element_located((By.CLASS_NAME, 'g2BVhd')))
-                print("Element found, ready to scrap!")
-                print("==============================================================")
-                break
+                if (WebDriverWait(self.driver, 20).until(
+                        ec.presence_of_element_located((By.CLASS_NAME, 'xoLGzf-icon')))):
+                    burger_menu = self.driver.find_element(By.CLASS_NAME, 'xoLGzf-icon')
+                    if burger_menu.get_attribute(
+                            'src') == "https://www.gstatic.com/images/icons/material/system_gm/1x/menu_black_24dp.png":
+                        self.driver.quit()
+                        self.driver = webdriver.Chrome(service=self.service)
+                        continue
+                    else:
+                        # Waiting for the page to load element "popular times"
+                        WebDriverWait(self.driver, 20).until(
+                            ec.presence_of_element_located((By.CLASS_NAME, 'g2BVhd')))
+
+                        print("Element found, ready to scrap!")
+                        print("==============================================================")
+                        break
             except TimeoutException:
                 print("Sorry wrong website!")
                 print("===========================================")
@@ -254,21 +265,24 @@ class Scraping:
                 self.driver = webdriver.Chrome(service=self.service)
                 continue
 
+        time.sleep(5)  # Waiting for the complete page to load.
+
         self.get_location_data()  # Calling the function to get all the location data.
-        # self.click_open_close_time()  # Calling the function to click the open and close time button.
-        # self.get_location_open_close_time()  # Calling to get open and close time for each day.
+        self.click_open_close_time()  # Calling the function to click the open and close time button.
+        self.get_location_open_close_time()  # Calling to get open and close time for each day.
         self.get_popular_times()  # Gets the busy percentage for each hour of each day.
 
         # Clicking the all reviews button and redirecting the driver to the all reviews page.
-        # self.click_reviews_button()
+        self.click_reviews_button()
 
-        # time.sleep(5)  # Waiting for the all reviews page to load.
+        time.sleep(5)  # Waiting for the all reviews page to load.
 
-        # self.scroll_the_page()  # Scrolling the page to load all reviews.
-        # self.expand_all_reviews()  # Expanding the long reviews by clicking see more button in each review.
-        # self.get_reviews_data()  # Getting all the reviews data.
+        self.scroll_the_page()  # Scrolling the page to load all reviews.
+        self.expand_all_reviews()  # Expanding the long reviews by clicking see more button in each review.
+        self.get_reviews_data()  # Getting all the reviews data.
 
         self.driver.quit()  # Closing the driver instance.
+        # print(self.location_data['Popular Times']['Monday'])  # access object
 
         return self.location_data  # Returning the Scraped Data.
 
@@ -277,3 +291,5 @@ url = "https://www.google.co.id/maps/place/Bogor+Cafe/@-6.172172,106.8266993,15z
 # url = "https://www.google.co.id/maps/place/D+cafe+jakarta/data=!4m6!3m5!1s0x2e69f5a209ba61c1:0xde2c2398c32a987f!8m2!3d-6.1802116!4d106.8510208!16s%2Fg%2F11rggggxh2?authuser=0&hl=en&rclk=1"
 x = Scraping()
 print(x.scrape(url))
+# print(Scraping().location_data['Popular Times']['Monday'])
+# print(self.location_data['Popular Times']['Monday'])  # access object
