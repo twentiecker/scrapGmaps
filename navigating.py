@@ -5,9 +5,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.chrome.options import Options
 import time
-import main
 
 url = "https://www.google.co.id/maps/search/restaurant+or+cafe/@-6.1721719,106.8266993,15z/data=!3m1!4b1"
 
@@ -45,17 +45,48 @@ while (True):
 
     # Get all link of detail page
     detail_page = driver.find_elements(By.CLASS_NAME, "hfpxzc")
+    list_v = []
+    for u in detail_page:
+        v = u.get_attribute('href')
+        list_v.append(v)
 
     # Click every detail page
     a = 2
     for a in range(3):
-        print(detail_page[a])
+        if a == 2:
+            container = driver.find_elements(By.CLASS_NAME, 'm6QErb')
+            scrollable_div = container[2]
+            o = 1
+            while True:
+                # driver.refresh()
+                # Get initial total of card
+                # cards = driver.find_elements(By.CLASS_NAME, 'bfdHYd')
+
+                # Scroll it to the bottom.
+                driver.execute_script('arguments[0].scrollTop = arguments[0].scrollHeight', scrollable_div)
+
+                time.sleep(pause_time)  # wait for more reviews to load.
+
+                # Break the loop if nothing change in cards total
+                if o == 2:
+                    break
+                o = o + 1
+                # Set temporary value for cards total gained
+                # x = len(cards)
+                # print(x)
+
+        # print(list_v[a])
         time.sleep(3)
         # WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.CLASS_NAME, 'hfpxzc')))
-        detail_page[a].click()
+        # detail_page[a].click()
+        # t = detail_page[a].get_attribute('href')
+        t = list_v[a]
+        print(t)
+        driver.get(t)
         time.sleep(10)
-        driver.find_element(By.CLASS_NAME, 'xoLGzf-icon').click()
-        a = a+1
+        # driver.find_element(By.CLASS_NAME, 'xoLGzf-icon').click()
+        driver.back()
+        a = a + 1
 
     btn = driver.find_elements(By.CLASS_NAME, "hV1iCc")
     for i in btn:
@@ -65,17 +96,3 @@ while (True):
             break
     print("===========================================================")
     time.sleep(3)
-
-# // *[ @ id = "pane"] / div / div[1] / div / div / div[2] / div[1] / div[3] / div / a
-# 1
-# // *[ @ id = "pane"] / div / div[1] / div / div / div[2] / div[1] / div[5] / div / a
-# 2
-# // *[ @ id = "pane"] / div / div[1] / div / div / div[2] / div[1] / div[7] / div / a
-# 3
-# // *[ @ id = "pane"] / div / div[1] / div / div / div[2] / div[1] / div[9] / div / a
-# 4
-#
-# // *[ @ id = "pane"] / div / div[1] / div / div / div[2] / div[1] / div[41] / div / a
-# 20
-
-# //*[@id="pane"]/div/div[1]/div/div/div[2]/div[1]/div[41]/div/a

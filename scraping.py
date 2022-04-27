@@ -10,26 +10,27 @@ from selenium.webdriver.chrome.options import Options
 import time
 
 
-class WebDriver:
+class Scraping:
     location_data = {}
 
     def __init__(self):
         # The __init__ function is the constructor that will automatically get called and initialize
         # these necessary parameters.
 
-        service = ChromeService(executable_path=ChromeDriverManager().install())
-        self.driver = webdriver.Chrome(service=service)
+        self.service = ChromeService(executable_path=ChromeDriverManager().install())
+        self.driver = webdriver.Chrome(service=self.service)
 
         self.location_data["title"] = "NA"
-        # self.location_data["rating"] = "NA"
-        # self.location_data["reviews_count"] = "NA"
+        self.location_data["rating"] = "NA"
+        self.location_data["reviews_count"] = "NA"
         self.location_data["price_cat"] = "NA"
         self.location_data["price_desc"] = "NA"
-        self.location_data["location"] = "NA"
-        # self.location_data["contact"] = "NA"
-        # self.location_data["website"] = "NA"
+        self.location_data["address"] = "NA"
         # self.location_data["Time"] = {"Senin": "NA", "Selasa": "NA", "Rabu": "NA", "Kamis": "NA",
         #                               "Jumat": "NA", "Sabtu": "NA", "Minggu": "NA"}
+        self.location_data["website"] = "NA"
+        self.location_data["contact"] = "NA"
+        self.location_data["location"] = "NA"
         self.location_data["Popular Times"] = {"Senin": [], "Selasa": [], "Rabu": [], "Kamis": [],
                                                "Jumat": [], "Sabtu": [], "Minggu": []}
         # self.location_data["Reviews"] = []
@@ -41,9 +42,20 @@ class WebDriver:
         # HTML elements with that class name or id name and stores them into a variable, and later we can use
         # the text() function over those variables to get the respective values.
 
-        title = self.driver.find_element(By.CLASS_NAME,'DUwDvf')
-        # avg_rating = self.driver.find_element(By.CLASS_NAME, "fontDisplayLarge")
-        # total_reviews = self.driver.find_element(By.CLASS_NAME, "h0ySl-wcwwM-E70qVe")
+        # Get title page
+        title = self.driver.find_element(By.CLASS_NAME, 'DUwDvf')
+        self.location_data["title"] = title.text.strip()
+
+        # Get Rating
+        avg_rating = self.driver.find_element(By.CLASS_NAME, "fontDisplayLarge")
+        self.location_data["rating"] = avg_rating.text.strip()
+
+        # Get reviews
+        total_reviews = self.driver.find_element(By.CLASS_NAME, "h0ySl-wcwwM-E70qVe")
+        self.location_data["reviews_count"] = total_reviews.text.replace("ulasan", ""). \
+            replace("reviews", "").strip()
+
+        # Get price code and desc
         container_price = self.driver.find_element(By.CLASS_NAME, 'mgr77e')
         tag_price = container_price.find_elements(By.TAG_NAME, 'span')
         for i in tag_price:
@@ -51,30 +63,49 @@ class WebDriver:
             if label:
                 price_cat = i.text
                 price_desc = label
+                self.location_data["price_cat"] = price_cat.strip()
+                self.location_data["price_desc"] = price_desc.replace(":", "").strip()
 
+        # Get address
         tag_address = self.driver.find_elements(By.CLASS_NAME, 'CsEnBe')
         for i in tag_address:
-            label = i.find_element(By.TAG_NAME, 'img')
-            if label.get_attribute('src') == "https://maps.gstatic.com/mapfiles/maps_lite/images/2x/ic_plus_code.png":
-                address = i.find_element(By.CLASS_NAME, 'Io6YTe')
-
-        # Get province of address
-        prov = address.text.strip().split(sep=",")
-
-        # phone_number = self.driver.find_element(By.XPATH,
-        #                                         "//*[@id='pane']/div/div[1]/div/div/div[9]/div[5]/button/div[1]/div[2]/div[1]")
+            label = i.get_attribute('aria-label')
+            if "Alamat" in label:
+                address = i
         # website = self.driver.find_element(By.XPATH,
         #                                    "//*[@id='pane']/div/div[1]/div/div/div[9]/div[4]/button/div[1]/div[2]/div[1]")
+        self.location_data["address"] = address.text.strip()
 
-        # self.location_data["rating"] = avg_rating.text.strip()
-        # self.location_data["reviews_count"] = total_reviews.text.replace("ulasan", ""). \
-        #     replace("reviews", "").strip()
-        self.location_data["title"] = title.text.strip()
-        self.location_data["price_cat"] = price_cat.strip()
-        self.location_data["price_desc"] = price_desc.replace(":", "").strip()
+        # Get website
+        tag_website = self.driver.find_elements(By.CLASS_NAME, 'CsEnBe')
+        for i in tag_website:
+            label = i.get_attribute('aria-label')
+            if "Situs Web" in label:
+                website = i
+        # website = self.driver.find_element(By.XPATH,
+        #                                    "//*[@id='pane']/div/div[1]/div/div/div[9]/div[4]/button/div[1]/div[2]/div[1]")
+        self.location_data["website"] = website.text.strip()
+
+        # Get phone number
+        tag_phone = self.driver.find_elements(By.CLASS_NAME, 'CsEnBe')
+        for i in tag_phone:
+            label = i.get_attribute('aria-label')
+            if "Telepon" in label:
+                phone_number = i
+        # phone_number = self.driver.find_element(By.XPATH,
+        #                                         "//*[@id='pane']/div/div[1]/div/div/div[9]/div[5]/button/div[1]/div[2]/div[1]")
+        self.location_data["contact"] = phone_number.text.strip()
+
+        # Get plus code (coordinat)
+        tag_plus_code = self.driver.find_elements(By.CLASS_NAME, 'CsEnBe')
+        for i in tag_plus_code:
+            label = i.get_attribute('aria-label')
+            if "Plus Codes" in label:
+                plus_code = i
+
+        # Get province from plus code (coordinat)
+        prov = plus_code.text.strip().split(sep=",")
         self.location_data["location"] = prov[2].strip()
-        # self.location_data["contact"] = phone_number.text.strip()
-        # self.location_data["website"] = website.text.strip()
 
     # def click_open_close_time(self):
     #     if len(list(self.driver.find_elements(By.CLASS_NAME, "LJKBpe-Tswv1b-hour-text"))) != 0:
@@ -204,20 +235,24 @@ class WebDriver:
     #         self.location_data["Reviews"].append({"name": a, "review": b, "date": c, "rating": d})
 
     def scrape(self, url):  # Passed the URL as a variable
-        while (True):
+        while True:
             try:
                 # Get is a method that will tell the driver to open at that particular URL
                 self.driver.get(url)
 
                 # Waiting for the page to load element "rating"
                 WebDriverWait(self.driver, 20).until(
-                    ec.presence_of_element_located((By.XPATH, '//*[@id="pane"]/div/div[1]/div/div')))
+                    ec.presence_of_element_located((By.CLASS_NAME, 'g2BVhd')))
                 print("Element found, ready to scrap!")
                 print("==============================================================")
                 break
             except TimeoutException:
-                self.driver.get(url)
-                print("Sorry website not available!")
+                print("Sorry wrong website!")
+                print("===========================================")
+                print("Attempting to get a right website!")
+                self.driver.quit()
+                self.driver = webdriver.Chrome(service=self.service)
+                continue
 
         self.get_location_data()  # Calling the function to get all the location data.
         # self.click_open_close_time()  # Calling the function to click the open and close time button.
@@ -235,9 +270,10 @@ class WebDriver:
 
         self.driver.quit()  # Closing the driver instance.
 
-        return (self.location_data)  # Returning the Scraped Data.
+        return self.location_data  # Returning the Scraped Data.
 
 
 url = "https://www.google.co.id/maps/place/Bogor+Cafe/@-6.172172,106.8266993,15z/data=!4m9!1m2!2m1!1srestaurant+or+cafe!3m5!1s0x2e69f5cc0abf0f67:0x78dce6deb9815e6!8m2!3d-6.172172!4d106.835454!15sChJyZXN0YXVyYW50IG9yIGNhZmVaFCIScmVzdGF1cmFudCBvciBjYWZlkgEVaW5kb25lc2lhbl9yZXN0YXVyYW50mgEkQ2hkRFNVaE5NRzluUzBWSlEwRm5TVVI1TFdWUFVISlJSUkFC"
-x = WebDriver()
+# url = "https://www.google.co.id/maps/place/D+cafe+jakarta/data=!4m6!3m5!1s0x2e69f5a209ba61c1:0xde2c2398c32a987f!8m2!3d-6.1802116!4d106.8510208!16s%2Fg%2F11rggggxh2?authuser=0&hl=en&rclk=1"
+x = Scraping()
 print(x.scrape(url))
