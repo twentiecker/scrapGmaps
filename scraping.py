@@ -5,7 +5,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.chrome.options import Options
 import time
 
@@ -13,12 +13,13 @@ import time
 class Scraping:
     location_data = {}
 
-    def __init__(self):
+    def __init__(self, driver):
         # The __init__ function is the constructor that will automatically get called and initialize
         # these necessary parameters.
 
-        self.service = ChromeService(executable_path=ChromeDriverManager().install())
-        self.driver = webdriver.Chrome(service=self.service)
+        # self.service = ChromeService(executable_path=ChromeDriverManager().install())
+        # self.driver = webdriver.Chrome(service=self.service)
+        self.driver = driver
 
         self.location_data["title"] = "NA"
         self.location_data["rating"] = "NA"
@@ -42,12 +43,10 @@ class Scraping:
 
         # Get title
         title = self.driver.find_element(By.CLASS_NAME, 'DUwDvf')
-        # ActionChains(self.driver).move_to_element(title).perform()
         self.location_data["title"] = title.text.strip()
 
         # Get rating
         avg_rating = self.driver.find_element(By.CLASS_NAME, "fontDisplayLarge")
-        # ActionChains(self.driver).move_to_element(avg_rating).perform()
         self.location_data["rating"] = avg_rating.text.strip()
 
         # Get reviews
@@ -93,8 +92,8 @@ class Scraping:
         # Get plus code (coordinat)
         tag_plus_code = self.driver.find_elements(By.CLASS_NAME, 'CsEnBe')
         for i in tag_plus_code:
-            time.sleep(1)
-            ActionChains(self.driver).move_to_element(i).perform()
+            # time.sleep(1)
+            # ActionChains(self.driver).move_to_element(i).perform()
             label = i.get_attribute('aria-label')
             if "Plus Codes" in label:
                 plus_code = i
@@ -136,6 +135,11 @@ class Scraping:
         # in that day and store it into list “b”, then loop in b and find out the busy percentage for that respective
         # hour in a day and store it in our final data list.
 
+        # Make a human movement
+        human = self.driver.find_element(By.CLASS_NAME, 'GqEqxf')
+        ActionChains(self.driver).move_to_element(human).perform()
+        time.sleep(1)
+
         # It will be a List of the HTML Section of each day.
         a = self.driver.find_elements(By.CLASS_NAME, "g2BVhd")
 
@@ -167,7 +171,7 @@ class Scraping:
         for i in element:
             j = i.get_attribute("aria-label")
             if "Ulasan lainnya" in j:
-                i.click()
+                ActionChains(self.driver).move_to_element(i).click(i).perform()
                 break
 
     def scroll_the_page(self):
@@ -178,21 +182,23 @@ class Scraping:
         # to scrape reviews.
 
         # Waits for the page to load.
-        WebDriverWait(self.driver, 10).until(
-            ec.presence_of_element_located((By.CLASS_NAME, 'jftiEf')))
+        WebDriverWait(self.driver, 20).until(ec.presence_of_element_located((By.CLASS_NAME, 'jftiEf')))
 
         pause_time = 2  # Waiting time after each scroll.
-        max_count = 2  # Number of times we will scroll the scroll bar to the bottom.
+        max_count = 5  # Number of times we will scroll the scroll bar to the bottom.
         x = 0
+
+        # Make a human movement
+        human = self.driver.find_elements(By.CLASS_NAME, 'jftiEf')
+        for h in human:
+            ActionChains(self.driver).move_to_element(h).perform()
+            time.sleep(1)
 
         # It gets the section of the scroll bar.
         print("Get the scroll pane, wait a sec!")
         print("===========================================")
-        tag_scrollable = self.driver.find_elements(By.CLASS_NAME, 'm6QErb')
-        for i in tag_scrollable:
-            j = i.find_elements(By.CLASS_NAME, 'PPCwl')
-            if j:
-                scrollable_div = i
+        scrollable_div = self.driver.find_elements(By.CSS_SELECTOR,
+                                                   "button[jsaction='pane.paginationSection.nextPage']")
 
         while (x < max_count):
             # Scroll it to the bottom.
@@ -240,38 +246,89 @@ class Scraping:
         for (a, b, c, d) in zip(review_names_list, review_text_list, review_dates_list, review_stars_list):
             self.location_data["Reviews"].append({"name": a, "review": b, "date": c, "rating": d})
 
-    def scrape(self, url):  # Passed the URL as a variable
-        while True:
-            try:
-                # Get is a method that will tell the driver to open at that particular URL
-                self.driver.get(url)
+    # def scrape(self, url):  # Passed the URL as a variable
+    #     while True:
+    #         try:
+    #             # Get is a method that will tell the driver to open at that particular URL
+    #             self.driver.get(url)
+    #
+    #             if (WebDriverWait(self.driver, 20).until(
+    #                     ec.presence_of_element_located((By.CLASS_NAME, 'xoLGzf-icon')))):
+    #                 burger_menu = self.driver.find_element(By.CLASS_NAME, 'xoLGzf-icon')
+    #                 if burger_menu.get_attribute(
+    #                         'src') == "https://www.gstatic.com/images/icons/material/system_gm/1x/menu_black_24dp.png":
+    #                     print("Oops, sorry wrong website!")
+    #                     print("===========================================")
+    #                     print("Attempting to get a right website!")
+    #                     self.driver.quit()
+    #                     self.driver = webdriver.Chrome(service=self.service)
+    #                     continue
+    #                 else:
+    #                     # Waiting for the page to load element "popular times"
+    #                     WebDriverWait(self.driver, 20).until(
+    #                         ec.presence_of_element_located((By.CLASS_NAME, 'g2BVhd')))
+    #
+    #                     print("Popular times found, ready to scrap!")
+    #                     print("==============================================================")
+    #                     break
+    #         except TimeoutException:
+    #             print("Oops, sorry wrong website!")
+    #             print("===========================================")
+    #             print("Attempting to get a right website!")
+    #             self.driver.quit()
+    #             self.driver = webdriver.Chrome(service=self.service)
+    #             continue
+    #
+    #     self.get_location_data()  # Calling the function to get all the location data.
+    #     self.click_open_close_time()  # Calling the function to click the open and close time button.
+    #     self.get_location_open_close_time()  # Calling to get open and close time for each day.
+    #     self.get_popular_times()  # Gets the busy percentage for each hour of each day.
+    #
+    #     # Clicking the all reviews button and redirecting the driver to the all reviews page.
+    #     self.click_reviews_button()
+    #
+    #     time.sleep(5)  # Waiting for the all reviews page to load.
+    #
+    #     self.scroll_the_page()  # Scrolling the page to load all reviews.
+    #     self.expand_all_reviews()  # Expanding the long reviews by clicking see more button in each review.
+    #     self.get_reviews_data()  # Getting all the reviews data.
+    #
+    #     self.driver.quit()  # Closing the driver instance.
+    #
+    #     return self.location_data  # Returning the Scraped Data.
 
-                if (WebDriverWait(self.driver, 20).until(
-                        ec.presence_of_element_located((By.CLASS_NAME, 'xoLGzf-icon')))):
-                    burger_menu = self.driver.find_element(By.CLASS_NAME, 'xoLGzf-icon')
-                    if burger_menu.get_attribute(
-                            'src') == "https://www.gstatic.com/images/icons/material/system_gm/1x/menu_black_24dp.png":
-                        print("Oops, sorry wrong website!")
-                        print("===========================================")
-                        print("Attempting to get a right website!")
-                        self.driver.quit()
-                        self.driver = webdriver.Chrome(service=self.service)
-                        continue
-                    else:
-                        # Waiting for the page to load element "popular times"
-                        WebDriverWait(self.driver, 20).until(
-                            ec.presence_of_element_located((By.CLASS_NAME, 'g2BVhd')))
-
-                        print("Popular times found, ready to scrap!")
-                        print("==============================================================")
-                        break
-            except TimeoutException:
-                print("Oops, sorry wrong website!")
-                print("===========================================")
-                print("Attempting to get a right website!")
-                self.driver.quit()
-                self.driver = webdriver.Chrome(service=self.service)
-                continue
+    def scrape(self):  # Passed the URL as a variable
+        # while True:
+        #     try:
+        #         # Get is a method that will tell the driver to open at that particular URL
+        #         # self.driver.get(url)
+        #
+        #         if (WebDriverWait(self.driver, 20).until(
+        #                 ec.presence_of_element_located((By.CLASS_NAME, 'xoLGzf-icon')))):
+        #             burger_menu = self.driver.find_element(By.CLASS_NAME, 'xoLGzf-icon')
+        #             if burger_menu.get_attribute(
+        #                     'src') == "https://www.gstatic.com/images/icons/material/system_gm/1x/menu_black_24dp.png":
+        #                 print("Oops, sorry wrong website!")
+        #                 print("===========================================")
+        #                 print("Attempting to get a right website!")
+        #                 self.driver.quit()
+        #                 self.driver = webdriver.Chrome(service=self.service)
+        #                 continue
+        #             else:
+        #                 # Waiting for the page to load element "popular times"
+        #                 WebDriverWait(self.driver, 20).until(
+        #                     ec.presence_of_element_located((By.CLASS_NAME, 'g2BVhd')))
+        #
+        #                 print("Popular times found, ready to scrap!")
+        #                 print("==============================================================")
+        #                 break
+        #     except TimeoutException:
+        #         print("Oops, sorry wrong website!")
+        #         print("===========================================")
+        #         print("Attempting to get a right website!")
+        #         self.driver.quit()
+        #         self.driver = webdriver.Chrome(service=self.service)
+        #         continue
 
         self.get_location_data()  # Calling the function to get all the location data.
         self.click_open_close_time()  # Calling the function to click the open and close time button.
@@ -286,7 +343,5 @@ class Scraping:
         self.scroll_the_page()  # Scrolling the page to load all reviews.
         self.expand_all_reviews()  # Expanding the long reviews by clicking see more button in each review.
         self.get_reviews_data()  # Getting all the reviews data.
-
-        self.driver.quit()  # Closing the driver instance.
 
         return self.location_data  # Returning the Scraped Data.
