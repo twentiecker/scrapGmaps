@@ -17,8 +17,6 @@ class Scraping:
         # The __init__ function is the constructor that will automatically get called and initialize
         # these necessary parameters.
 
-        # self.service = ChromeService(executable_path=ChromeDriverManager().install())
-        # self.driver = webdriver.Chrome(service=self.service)
         self.driver = driver
 
         self.location_data["title"] = "NA"
@@ -46,11 +44,12 @@ class Scraping:
         self.location_data["title"] = title.text.strip()
 
         # Get rating
-        avg_rating = self.driver.find_element(By.CLASS_NAME, "fontDisplayLarge")
+        avg_rating = self.driver.find_element(By.CSS_SELECTOR, "span[jsan='0.aria-hidden']")
         self.location_data["rating"] = avg_rating.text.strip()
 
         # Get reviews
-        total_reviews = self.driver.find_element(By.CLASS_NAME, "h0ySl-wcwwM-E70qVe")
+        tag_total_reviews = self.driver.find_element(By.CLASS_NAME, "skqShb")
+        total_reviews = tag_total_reviews.find_element(By.CSS_SELECTOR, "span[jsan='5.color']")
         self.location_data["reviews_count"] = total_reviews.text.replace("ulasan", ""). \
             replace("reviews", "").strip()
 
@@ -71,7 +70,8 @@ class Scraping:
             label = i.get_attribute('aria-label')
             if "Alamat" in label:
                 address = i
-        self.location_data["address"] = address.text.strip()
+                self.location_data["address"] = address.text.strip()
+                break
 
         # Get website
         tag_website = self.driver.find_elements(By.CLASS_NAME, 'CsEnBe')
@@ -79,7 +79,8 @@ class Scraping:
             label = i.get_attribute('aria-label')
             if "Situs Web" in label:
                 website = i
-        self.location_data["website"] = website.text.strip()
+                self.location_data["website"] = website.text.strip()
+                break
 
         # Get phone number
         tag_phone = self.driver.find_elements(By.CLASS_NAME, 'CsEnBe')
@@ -87,21 +88,22 @@ class Scraping:
             label = i.get_attribute('aria-label')
             if "Telepon" in label:
                 phone_number = i
-        self.location_data["contact"] = phone_number.text.strip()
+                self.location_data["contact"] = phone_number.text.strip()
+                break
 
         # Get plus code (coordinat)
         tag_plus_code = self.driver.find_elements(By.CLASS_NAME, 'CsEnBe')
         for i in tag_plus_code:
-            # time.sleep(1)
-            # ActionChains(self.driver).move_to_element(i).perform()
             label = i.get_attribute('aria-label')
             if "Plus Codes" in label:
                 plus_code = i
+
+                # Get province from plus code (coordinat)
+                prov = plus_code.text.strip().split(sep=",")
+
+                self.location_data["location"] = prov[2].strip()
                 break
 
-        # Get province from plus code (coordinat)
-        prov = plus_code.text.strip().split(sep=",")
-        self.location_data["location"] = prov[2].strip()
 
     def click_open_close_time(self):
         if len(list(self.driver.find_elements(By.CLASS_NAME, "LJKBpe-Tswv1b-hour-text"))) != 0:
@@ -135,11 +137,6 @@ class Scraping:
         # in that day and store it into list “b”, then loop in b and find out the busy percentage for that respective
         # hour in a day and store it in our final data list.
 
-        # Make a human movement
-        human = self.driver.find_element(By.CLASS_NAME, 'GqEqxf')
-        ActionChains(self.driver).move_to_element(human).perform()
-        time.sleep(1)
-
         # It will be a List of the HTML Section of each day.
         a = self.driver.find_elements(By.CLASS_NAME, "g2BVhd")
 
@@ -171,7 +168,9 @@ class Scraping:
         for i in element:
             j = i.get_attribute("aria-label")
             if "Ulasan lainnya" in j:
-                ActionChains(self.driver).move_to_element(i).click(i).perform()
+                ActionChains(self.driver).move_to_element(i).perform()
+                time.sleep(2)
+                i.click()
                 break
 
     def scroll_the_page(self):
@@ -182,23 +181,21 @@ class Scraping:
         # to scrape reviews.
 
         # Waits for the page to load.
-        WebDriverWait(self.driver, 20).until(ec.presence_of_element_located((By.CLASS_NAME, 'jftiEf')))
+        WebDriverWait(self.driver, 20).until(ec.presence_of_element_located((By.CLASS_NAME, 'm6QErb')))
 
         pause_time = 2  # Waiting time after each scroll.
         max_count = 5  # Number of times we will scroll the scroll bar to the bottom.
         x = 0
 
-        # Make a human movement
-        human = self.driver.find_elements(By.CLASS_NAME, 'jftiEf')
-        for h in human:
-            ActionChains(self.driver).move_to_element(h).perform()
-            time.sleep(1)
+        # # Make a human movement
+        # human = self.driver.find_elements(By.CLASS_NAME, 'jftiEf')
+        # for h in human:
+        #     ActionChains(self.driver).move_to_element(h).perform()
+        #     time.sleep(1)
 
         # It gets the section of the scroll bar.
-        print("Get the scroll pane, wait a sec!")
-        print("===========================================")
         scrollable_div = self.driver.find_elements(By.CSS_SELECTOR,
-                                                   "button[jsaction='pane.paginationSection.nextPage']")
+                                                   "div[jsan='t-dgE5uNmzjiE,7.m6QErb,7.DxyBCb,7.kA9KIf,7.dS8AEf,0.tabindex']")
 
         while (x < max_count):
             # Scroll it to the bottom.
@@ -216,6 +213,7 @@ class Scraping:
         element = self.driver.find_elements(By.CLASS_NAME, "w8nwRe")
         for i in element:
             i.click()
+            time.sleep(1)
 
     def get_reviews_data(self):
         # Now that everything is been loaded we will create a function that scrapes the reviews data like
@@ -329,6 +327,8 @@ class Scraping:
         #         self.driver.quit()
         #         self.driver = webdriver.Chrome(service=self.service)
         #         continue
+
+        time.sleep(5)
 
         self.get_location_data()  # Calling the function to get all the location data.
         self.click_open_close_time()  # Calling the function to click the open and close time button.

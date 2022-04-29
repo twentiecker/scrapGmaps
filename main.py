@@ -11,36 +11,64 @@ import time
 import scraping
 import navigating
 
-# Navigating
 url = "https://www.google.co.id/maps/search/restaurant+or+cafe/@-6.1721719,106.8266993,15z/data=!3m1!4b1"
 
+# Set options for driver
+opts = Options()
+opts.add_argument("--headless")
+opts.add_argument("--no-sandbox")
+opts.add_argument("--window-size=1420,1080")
+opts.add_argument("--disable-gpu")
+opts.add_argument(
+    "user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.61 Safari/537.36")
+
+# Initiate selenium driver
 service = ChromeService(executable_path=ChromeDriverManager().install())
-driver = webdriver.Chrome(service=service)
+driver = webdriver.Chrome(service=service, options=opts)
 driver.get(url)
 
-# Initiating process
-navigate = navigating.Navigating(driver)
+# Initiating module
+navigate = navigating.Navigating(driver, url)
 
 # Check prerequisite home page
 navigate.prerequisite_home()
 
+time.sleep(5)
+
+# Scroll home page to bottom
+navigate.scroll_home()
+print(f"max_count = {navigate.max_count}")
+
 i = 0
-while (i < 1):
+while (i < navigate.max_count):
+    print("======================================")
+    print(f"============= Scrap ke-{i + 1} =============")
+    print("======================================")
+
     # Click item one by one in home page
     time.sleep(5)
     navigate.click_items_home(i)
 
     # Check prerequisite detail page
     time.sleep(5)
-    navigate.prerequisite_detail(i)
+    navigate.prerequisite_detail()
 
-    # Scraping
-    # url = "https://www.google.co.id/maps/place/Bogor+Cafe/@-6.172172,106.8266993,15z/data=!4m9!1m2!2m1!1srestaurant+or+cafe!3m5!1s0x2e69f5cc0abf0f67:0x78dce6deb9815e6!8m2!3d-6.172172!4d106.835454!15sChJyZXN0YXVyYW50IG9yIGNhZmVaFCIScmVzdGF1cmFudCBvciBjYWZlkgEVaW5kb25lc2lhbl9yZXN0YXVyYW50mgEkQ2hkRFNVaE5NRzluUzBWSlEwRm5TVVI1TFdWUFVISlJSUkFC"
+    # Continue the loop if nothing "popular times" in detail page
+    try:
+        WebDriverWait(driver, 5).until(ec.presence_of_element_located((By.CLASS_NAME, 'g2BVhd')))
+    except TimeoutException:
+        # Scroll home page to bottom
+        navigate.scroll_home()
+        print(f"max_count = {navigate.max_count}")
+
+        i = i + 1
+        continue
+
     scrap = scraping.Scraping(driver)
     # data = scrap.scrape(url)
     data = scrap.scrape()
     print(data)
-    print(data['title'])
+    # print(data['title'])
 
     # Back to detail page from review page
     navigate.back_to_detail()
@@ -56,12 +84,17 @@ while (i < 1):
 
     i = i + 1
 
+    # Scroll home page to bottom
+    navigate.scroll_home()
+    print(f"max_count = {navigate.max_count}")
+
 # Next page
+WebDriverWait(driver, 20).until(ec.visibility_of_element_located((By.CLASS_NAME, "hV1iCc")))
 page = driver.find_elements(By.CLASS_NAME, "hV1iCc")
 for i in page:
     j = i.get_attribute("jsaction")
     if j == "pane.paginationSection.nextPage":
         i.click()
         break
-print("next page")
+print("*** Next page ***")
 time.sleep(5)
